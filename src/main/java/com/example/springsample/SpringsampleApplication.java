@@ -15,7 +15,7 @@ public class SpringsampleApplication {
     @Bean
     CommandLineRunner runner(RestaurantFinder finder) {
         return args -> {
-            String location = (args.length > 0) ? String.join(" ", args) : "Erin, Ontario, Canada";
+            String location = (args.length > 0) ? String.join(" ", args) : "Cherrybrook, NSW, Australia";
             double radiusKm = 2.0;
             finder.findAndPrint(location, radiusKm);
         };
