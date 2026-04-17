@@ -48,6 +48,105 @@ body::before {
     100% { transform: translate(-3%, 2%) rotate(3deg); }
 }
 
+/* ===== SCROLLING TICKER ===== */
+.ticker-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(90deg, rgba(61,25,91,.85), rgba(26,6,51,.9) 30%, rgba(26,6,51,.9) 70%, rgba(61,25,91,.85));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--card-border);
+    height: 42px;
+    overflow: hidden;
+    font-size: .8rem;
+}
+
+.ticker-label {
+    flex-shrink: 0;
+    padding: 0 1rem;
+    font-weight: 800;
+    font-size: .7rem;
+    letter-spacing: .15em;
+    color: var(--bg);
+    background: linear-gradient(135deg, var(--magenta), #ff3378);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.ticker-label::after {
+    content: '';
+    position: absolute;
+    right: -12px;
+    top: 0;
+    border-style: solid;
+    border-width: 21px 0 21px 12px;
+    border-color: transparent transparent transparent var(--magenta);
+}
+
+.ticker-track {
+    flex: 1;
+    overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+}
+
+.ticker-content {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    animation: tickerScroll 60s linear infinite;
+    width: max-content;
+    padding-left: 1.5rem;
+}
+
+@keyframes tickerScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.ticker-crest {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.4));
+}
+
+.ticker-team { font-weight: 600; color: var(--text); }
+.ticker-vs   { font-weight: 800; color: var(--magenta); font-size: .7rem; }
+
+.ticker-date {
+    font-size: .7rem;
+    color: var(--cyan);
+    font-weight: 500;
+    margin-left: .2rem;
+}
+
+.ticker-sep {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--card-border);
+    margin: 0 1.25rem;
+    flex-shrink: 0;
+}
+
+.ticker-bar:hover .ticker-content {
+    animation-play-state: paused;
+}
+
 /* Container */
 .container { max-width: 1040px; margin: 0 auto; padding: 2.5rem 1.25rem; }
 

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="ticker" class="ticker-bar" th:if="${tickerMatches != null and !tickerMatches.isEmpty()}">
+    <div class="ticker-label">UPCOMING</div>
+    <div class="ticker-track">
+        <div class="ticker-content">
+            <!-- Render twice so the loop is seamless -->
+            <th:block th:each="_ : ${#numbers.sequence(1, 2)}">
+                <span th:each="m : ${tickerMatches}" class="ticker-item">
+                    <img th:src="${m.homeTeam().crest()}" alt="" class="ticker-crest"/>
+                    <span th:text="${m.homeTeam().shortName() ?: m.homeTeam().name()}" class="ticker-team"></span>
+                    <span class="ticker-vs">vs</span>
+                    <span th:text="${m.awayTeam().shortName() ?: m.awayTeam().name()}" class="ticker-team"></span>
+                    <img th:src="${m.awayTeam().crest()}" alt="" class="ticker-crest"/>
+                    <span class="ticker-date"
+                          th:text="${#temporals.format(m.utcDate(), 'EEE d MMM HH:mm')}"></span>
+                    <span class="ticker-sep"></span>
+                </span>
+            </th:block>
+        </div>
+    </div>
+</div>
+</body>
+</html>

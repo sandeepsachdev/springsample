@@ -29,16 +29,17 @@ public class MatchController {
     public String index(Model model) {
         try {
             List<Match> upcoming = footballData.getUpcomingMatches();
-            // Group matches by matchday
             Map<Integer, List<Match>> byMatchday = new LinkedHashMap<>();
             for (Match m : upcoming) {
                 byMatchday.computeIfAbsent(m.matchday(), k -> new ArrayList<>()).add(m);
             }
             model.addAttribute("matchdays", byMatchday);
+            model.addAttribute("tickerMatches", upcoming.stream().limit(20).toList());
             model.addAttribute("error", null);
         } catch (Exception e) {
             log.error("Failed to fetch matches", e);
             model.addAttribute("matchdays", Map.of());
+            model.addAttribute("tickerMatches", List.of());
             model.addAttribute("error", e.getMessage());
         }
         return "index";
@@ -48,6 +49,8 @@ public class MatchController {
     public String predictMatch(@PathVariable int matchId, Model model) {
         try {
             List<Match> upcoming = footballData.getUpcomingMatches();
+            model.addAttribute("tickerMatches", upcoming.stream().limit(20).toList());
+
             Match match = upcoming.stream()
                     .filter(m -> m.id() == matchId)
                     .findFirst()
@@ -64,6 +67,7 @@ public class MatchController {
             log.error("Failed to predict lineup for match {}", matchId, e);
             model.addAttribute("prediction", null);
             model.addAttribute("match", null);
+            model.addAttribute("tickerMatches", List.of());
             model.addAttribute("error", e.getMessage());
         }
         return "prediction";
