@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Predicted Lineup</title>
+    <title th:text="${prediction != null ? prediction.home().shortName() + ' vs ' + prediction.away().shortName() + ' | Predicted Lineup' : 'Predicted Lineup'}"></title>
     <link rel="stylesheet" th:href="@{/style.css}"/>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9917;</text></svg>"/>
 </head>
 <body>
 <div class="container">
@@ -15,13 +16,18 @@
     </div>
 
     <div th:if="${prediction != null}">
+        <div class="match-title-crests">
+            <img th:src="${prediction.home().crest()}" alt=""/>
+            <span class="vs-large">vs</span>
+            <img th:src="${prediction.away().crest()}" alt=""/>
+        </div>
         <h1 class="match-title">
             <span th:text="${prediction.home().teamName()}"></span>
-            vs
+            <span style="color: var(--muted); font-weight: 400;"> vs </span>
             <span th:text="${prediction.away().teamName()}"></span>
         </h1>
         <p class="kick-off-detail"
-           th:text="${#temporals.format(prediction.utcDate(), 'EEEE d MMMM yyyy, HH:mm')} + ' UTC  |  Matchday ' + ${prediction.matchday()}">
+           th:text="${#temporals.format(prediction.utcDate(), 'EEEE d MMMM yyyy, HH:mm')} + ' UTC  &bull;  Matchday ' + ${prediction.matchday()}">
         </p>
 
         <div class="lineups-wrapper">
@@ -31,7 +37,7 @@
                     <img th:src="${prediction.home().crest()}" alt="" class="crest-lg"/>
                     <div>
                         <h2 th:text="${prediction.home().teamName()}"></h2>
-                        <span class="formation" th:text="'Formation: ' + ${prediction.home().formation()}"></span>
+                        <span class="formation" th:text="${prediction.home().formation()}"></span>
                     </div>
                 </div>
 
@@ -40,9 +46,9 @@
                     <thead><tr><th>#</th><th>Player</th><th>Age</th><th>Pos</th></tr></thead>
                     <tbody>
                     <tr th:each="p : ${prediction.home().startingXI()}">
-                        <td th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
-                        <td th:text="${p.name()}"></td>
-                        <td th:text="${p.age() > 0 ? p.age() : '-'}"></td>
+                        <td class="shirt-num" th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
+                        <td class="player-name" th:text="${p.name()}"></td>
+                        <td class="age-col" th:text="${p.age() > 0 ? p.age() : '-'}"></td>
                         <td><span class="pos-badge" th:classappend="${p.positionGroup()}"
                                   th:text="${p.positionGroup()}"></span></td>
                     </tr>
@@ -53,9 +59,9 @@
                 <table class="lineup-table bench">
                     <tbody>
                     <tr th:each="p : ${prediction.home().bench()}">
-                        <td th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
-                        <td th:text="${p.name()}"></td>
-                        <td th:text="${p.age() > 0 ? p.age() : '-'}"></td>
+                        <td class="shirt-num" th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
+                        <td class="player-name" th:text="${p.name()}"></td>
+                        <td class="age-col" th:text="${p.age() > 0 ? p.age() : '-'}"></td>
                         <td><span class="pos-badge" th:classappend="${p.positionGroup()}"
                                   th:text="${p.positionGroup()}"></span></td>
                     </tr>
@@ -69,7 +75,7 @@
                     <img th:src="${prediction.away().crest()}" alt="" class="crest-lg"/>
                     <div>
                         <h2 th:text="${prediction.away().teamName()}"></h2>
-                        <span class="formation" th:text="'Formation: ' + ${prediction.away().formation()}"></span>
+                        <span class="formation" th:text="${prediction.away().formation()}"></span>
                     </div>
                 </div>
 
@@ -78,9 +84,9 @@
                     <thead><tr><th>#</th><th>Player</th><th>Age</th><th>Pos</th></tr></thead>
                     <tbody>
                     <tr th:each="p : ${prediction.away().startingXI()}">
-                        <td th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
-                        <td th:text="${p.name()}"></td>
-                        <td th:text="${p.age() > 0 ? p.age() : '-'}"></td>
+                        <td class="shirt-num" th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
+                        <td class="player-name" th:text="${p.name()}"></td>
+                        <td class="age-col" th:text="${p.age() > 0 ? p.age() : '-'}"></td>
                         <td><span class="pos-badge" th:classappend="${p.positionGroup()}"
                                   th:text="${p.positionGroup()}"></span></td>
                     </tr>
@@ -91,9 +97,9 @@
                 <table class="lineup-table bench">
                     <tbody>
                     <tr th:each="p : ${prediction.away().bench()}">
-                        <td th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
-                        <td th:text="${p.name()}"></td>
-                        <td th:text="${p.age() > 0 ? p.age() : '-'}"></td>
+                        <td class="shirt-num" th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
+                        <td class="player-name" th:text="${p.name()}"></td>
+                        <td class="age-col" th:text="${p.age() > 0 ? p.age() : '-'}"></td>
                         <td><span class="pos-badge" th:classappend="${p.positionGroup()}"
                                   th:text="${p.positionGroup()}"></span></td>
                     </tr>
@@ -104,8 +110,8 @@
     </div>
 
     <div class="disclaimer">
-        <strong>How predictions work:</strong> Players are scored by experience (age 25-30 peak),
-        squad number seniority (1-11 favoured), and positional fit for the manager's
+        <strong>How predictions work:</strong> Players are scored by experience (age 25&ndash;30 peak),
+        squad number seniority (1&ndash;11 favoured), and positional fit for the manager&rsquo;s
         typical formation. Injury and suspension data is not available on the free API tier,
         so some predicted starters may currently be unavailable.
     </div>

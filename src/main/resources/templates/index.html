@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>PL Lineup Predictor</title>
     <link rel="stylesheet" th:href="@{/style.css}"/>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9917;</text></svg>"/>
 </head>
 <body>
 <div class="container">
     <header>
         <h1>Premier League Lineup Predictor</h1>
-        <p class="subtitle">Click a match to see the predicted starting XI for both teams</p>
+        <p class="subtitle">Select a fixture to see the predicted starting XI for both teams</p>
     </header>
 
     <div th:if="${error}" class="error-banner">
