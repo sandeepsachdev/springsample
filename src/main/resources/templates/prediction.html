@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Predicted Lineup</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
+</head>
+<body>
+<div class="container">
+    <a href="/" class="back-link">&larr; All Matches</a>
+
+    <div th:if="${error}" class="error-banner">
+        <strong>Error:</strong> <span th:text="${error}"></span>
+    </div>
+
+    <div th:if="${prediction != null}">
+        <h1 class="match-title">
+            <span th:text="${prediction.home().teamName()}"></span>
+            vs
+            <span th:text="${prediction.away().teamName()}"></span>
+        </h1>
+        <p class="kick-off-detail"
+           th:text="${#temporals.format(prediction.utcDate(), 'EEEE d MMMM yyyy, HH:mm')} + ' UTC  |  Matchday ' + ${prediction.matchday()}">
+        </p>
+
+        <div class="lineups-wrapper">
+            <!-- Home -->
+            <div class="lineup-card home-card">
+                <div class="lineup-header">
+                    <img th:src="${prediction.home().crest()}" alt="" class="crest-lg"/>
+                    <div>
+                        <h2 th:text="${prediction.home().teamName()}"></h2>
+                        <span class="formation" th:text="'Formation: ' + ${prediction.home().formation()}"></span>
+                    </div>
+                </div>
+
+                <h3>Starting XI</h3>
+                <table class="lineup-table">
+                    <thead><tr><th>#</th><th>Player</th><th>Pos</th></tr></thead>
+                    <tbody>
+                    <tr th:each="p : ${prediction.home().startingXI()}">
+                        <td th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
+                        <td th:text="${p.name()}"></td>
+                        <td><span class="pos-badge" th:classappend="${p.positionGroup()}"
+                                  th:text="${p.positionGroup()}"></span></td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <h3>Substitutes</h3>
+                <table class="lineup-table bench">
+                    <tbody>
+                    <tr th:each="p : ${prediction.home().bench()}">
+                        <td th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
+                        <td th:text="${p.name()}"></td>
+                        <td><span class="pos-badge" th:classappend="${p.positionGroup()}"
+                                  th:text="${p.positionGroup()}"></span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Away -->
+            <div class="lineup-card away-card">
+                <div class="lineup-header">
+                    <img th:src="${prediction.away().crest()}" alt="" class="crest-lg"/>
+                    <div>
+                        <h2 th:text="${prediction.away().teamName()}"></h2>
+                        <span class="formation" th:text="'Formation: ' + ${prediction.away().formation()}"></span>
+                    </div>
+                </div>
+
+                <h3>Starting XI</h3>
+                <table class="lineup-table">
+                    <thead><tr><th>#</th><th>Player</th><th>Pos</th></tr></thead>
+                    <tbody>
+                    <tr th:each="p : ${prediction.away().startingXI()}">
+                        <td th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
+                        <td th:text="${p.name()}"></td>
+                        <td><span class="pos-badge" th:classappend="${p.positionGroup()}"
+                                  th:text="${p.positionGroup()}"></span></td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <h3>Substitutes</h3>
+                <table class="lineup-table bench">
+                    <tbody>
+                    <tr th:each="p : ${prediction.away().bench()}">
+                        <td th:text="${p.shirtNumber() != 0 ? p.shirtNumber() : '-'}"></td>
+                        <td th:text="${p.name()}"></td>
+                        <td><span class="pos-badge" th:classappend="${p.positionGroup()}"
+                                  th:text="${p.positionGroup()}"></span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Data from <a href="https://www.football-data.org/" target="_blank">football-data.org</a>.
+           Lineups are predictions based on squad data and typical formations.</p>
+    </footer>
+</div>
+</body>
+</html>

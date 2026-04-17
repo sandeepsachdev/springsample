@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>PL Lineup Predictor</title>
+    <link rel="stylesheet" th:href="@{/style.css}"/>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Premier League Lineup Predictor</h1>
+        <p class="subtitle">Click a match to see the predicted starting XI for both teams</p>
+    </header>
+
+    <div th:if="${error}" class="error-banner">
+        <strong>Error:</strong> <span th:text="${error}"></span>
+        <p>Make sure <code>FOOTBALL_DATA_API_KEY</code> is set. Get a free key at
+            <a href="https://www.football-data.org/client/register" target="_blank">football-data.org</a>.</p>
+    </div>
+
+    <div th:each="entry : ${matchdays}">
+        <h2 class="matchday-header">Matchday <span th:text="${entry.key}"></span></h2>
+        <div class="match-grid">
+            <a th:each="m : ${entry.value}"
+               th:href="@{/predict/{id}(id=${m.id()})}"
+               class="match-card">
+                <div class="team home">
+                    <img th:src="${m.homeTeam().crest()}" alt="" class="crest"/>
+                    <span th:text="${m.homeTeam().shortName() ?: m.homeTeam().name()}"></span>
+                </div>
+                <div class="vs">
+                    <span class="kick-off"
+                          th:text="${#temporals.format(m.utcDate(), 'EEE d MMM, HH:mm')} + ' UTC'"></span>
+                    <span class="vs-label">vs</span>
+                </div>
+                <div class="team away">
+                    <img th:src="${m.awayTeam().crest()}" alt="" class="crest"/>
+                    <span th:text="${m.awayTeam().shortName() ?: m.awayTeam().name()}"></span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${#maps.isEmpty(matchdays) and error == null}" class="empty">
+        <p>No upcoming scheduled matches found.</p>
+    </div>
+
+    <footer>
+        <p>Data from <a href="https://www.football-data.org/" target="_blank">football-data.org</a>.
+           Lineups are predictions based on squad data and typical formations.</p>
+    </footer>
+</div>
+</body>
+</html>
