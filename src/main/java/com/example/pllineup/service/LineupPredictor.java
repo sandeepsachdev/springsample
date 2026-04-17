@@ -9,26 +9,33 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Predicts the most likely starting XI for a team based on squad composition
- * and the manager's typical formation.
+ * Predicts the most likely starting XI using a weighted scoring system
+ * that favours experience, prime-age players, and first-team shirt numbers.
  *
- * Heuristic approach (no ML):
- *   - Map each player to a positional group (GK / DEF / MID / FWD).
- *   - Apply the team's preferred formation to determine how many slots
- *     exist per group.
- *   - Rank players within each group by shirt-number seniority (lower
- *     numbers typically indicate first-choice starters) and alphabetical
- *     name as a tie-breaker.
- *   - Pick the top N from each group. The remainder form the bench (up
- *     to 9 subs).
+ * Scoring per player (higher = more likely to start):
+ *   +30  shirt number 1-11  (first-choice squad numbers)
+ *   +15  shirt number 12-23 (regular squad)
+ *    -5  shirt number 24-30 (fringe)
+ *   -30  shirt number >30 or 0 (youth / unregistered)
+ *
+ *   +25  age 25-30  (peak years)
+ *   +15  age 23-24 or 31-32
+ *    +5  age 21-22 or 33
+ *   -15  age <21   (likely not first choice unless exceptional)
+ *   -10  age >34   (rotation / backup)
+ *
+ *   +10  position exactly matches a formation slot (e.g. Left-Back in a
+ *        4-back, Centre-Forward in a 1-striker system)
+ *
+ * The engine then picks the top-scoring player for each formation slot,
+ * ensuring no player is picked twice.
  */
 @Service
 public class LineupPredictor {
 
     private static final Logger log = LoggerFactory.getLogger(LineupPredictor.class);
 
-    // Well-known manager formations per team (2024-25 season tendencies).
-    // Falls back to 4-3-3 if unknown.
+    // Manager formations for 2024-25 season
     private static final Map<String, String> TEAM_FORMATIONS = Map.ofEntries(
             Map.entry("Arsenal FC", "4-3-3"),
             Map.entry("Aston Villa FC", "4-2-3-1"),
@@ -52,40 +59,116 @@ public class LineupPredictor {
             Map.entry("Wolverhampton Wanderers FC", "3-4-3")
     );
 
+    // Expanded formation slot definitions.
+    // Each slot is a positional group (GK/DEF/MID/FWD) plus preferred
+    // detailed positions for bonus scoring.
+    private record Slot(String group, Set<String> preferred) {}
+
+    private static final Map<String, List<Slot>> FORMATION_SLOTS = new LinkedHashMap<>();
+    static {
+        FORMATION_SLOTS.put("4-3-3", List.of(
+                new Slot("GK",  Set.of("Goalkeeper")),
+                new Slot("DEF", Set.of("Right-Back")),
+                new Slot("DEF", Set.of("Centre-Back")),
+                new Slot("DEF", Set.of("Centre-Back")),
+                new Slot("DEF", Set.of("Left-Back")),
+                new Slot("MID", Set.of("Defensive Midfield", "Central Midfield")),
+                new Slot("MID", Set.of("Central Midfield")),
+                new Slot("MID", Set.of("Central Midfield", "Attacking Midfield")),
+                new Slot("FWD", Set.of("Right Winger", "Left Winger")),
+                new Slot("FWD", Set.of("Centre-Forward")),
+                new Slot("FWD", Set.of("Left Winger", "Right Winger"))
+        ));
+        FORMATION_SLOTS.put("4-2-3-1", List.of(
+                new Slot("GK",  Set.of("Goalkeeper")),
+                new Slot("DEF", Set.of("Right-Back")),
+                new Slot("DEF", Set.of("Centre-Back")),
+                new Slot("DEF", Set.of("Centre-Back")),
+                new Slot("DEF", Set.of("Left-Back")),
+                new Slot("MID", Set.of("Defensive Midfield", "Central Midfield")),
+                new Slot("MID", Set.of("Defensive Midfield", "Central Midfield")),
+                new Slot("MID", Set.of("Right Winger", "Right Midfield", "Attacking Midfield")),
+                new Slot("MID", Set.of("Attacking Midfield")),
+                new Slot("MID", Set.of("Left Winger", "Left Midfield", "Attacking Midfield")),
+                new Slot("FWD", Set.of("Centre-Forward"))
+        ));
+        FORMATION_SLOTS.put("4-4-2", List.of(
+                new Slot("GK",  Set.of("Goalkeeper")),
+                new Slot("DEF", Set.of("Right-Back")),
+                new Slot("DEF", Set.of("Centre-Back")),
+                new Slot("DEF", Set.of("Centre-Back")),
+                new Slot("DEF", Set.of("Left-Back")),
+                new Slot("MID", Set.of("Right Midfield", "Right Winger")),
+                new Slot("MID", Set.of("Central Midfield", "Defensive Midfield")),
+                new Slot("MID", Set.of("Central Midfield")),
+                new Slot("MID", Set.of("Left Midfield", "Left Winger")),
+                new Slot("FWD", Set.of("Centre-Forward")),
+                new Slot("FWD", Set.of("Centre-Forward", "Offence"))
+        ));
+        FORMATION_SLOTS.put("3-4-3", List.of(
+                new Slot("GK",  Set.of("Goalkeeper")),
+                new Slot("DEF", Set.of("Centre-Back")),
+                new Slot("DEF", Set.of("Centre-Back")),
+                new Slot("DEF", Set.of("Centre-Back")),
+                new Slot("MID", Set.of("Right-Back", "Right Midfield")),
+                new Slot("MID", Set.of("Central Midfield", "Defensive Midfield")),
+                new Slot("MID", Set.of("Central Midfield")),
+                new Slot("MID", Set.of("Left-Back", "Left Midfield")),
+                new Slot("FWD", Set.of("Right Winger")),
+                new Slot("FWD", Set.of("Centre-Forward")),
+                new Slot("FWD", Set.of("Left Winger"))
+        ));
+    }
+
     public MatchPrediction predict(Match match, Team homeTeam, Team awayTeam) {
-        PredictedLineup home = predictForTeam(homeTeam);
-        PredictedLineup away = predictForTeam(awayTeam);
-        return new MatchPrediction(match.id(), match.utcDate(), match.matchday(), home, away);
+        return new MatchPrediction(
+                match.id(), match.utcDate(), match.matchday(),
+                predictForTeam(homeTeam),
+                predictForTeam(awayTeam));
     }
 
     private PredictedLineup predictForTeam(Team team) {
         String formation = TEAM_FORMATIONS.getOrDefault(team.name(), "4-3-3");
-        int[] slots = parseFormation(formation);
-        // slots = [DEF, MID, FWD]  — GK is always 1.
+        List<Slot> slots = FORMATION_SLOTS.getOrDefault(formation,
+                FORMATION_SLOTS.get("4-3-3"));
 
-        Map<String, List<Player>> byGroup = team.squad().stream()
-                .filter(p -> p.position() != null)
-                .collect(Collectors.groupingBy(Player::positionGroup));
+        // Filter out players with no position (staff, coaches listed in some squads)
+        List<Player> available = team.squad().stream()
+                .filter(p -> p.position() != null && !p.positionGroup().equals("Unknown"))
+                .toList();
 
-        List<Player> gks  = ranked(byGroup.getOrDefault("GK", List.of()));
-        List<Player> defs = ranked(byGroup.getOrDefault("DEF", List.of()));
-        List<Player> mids = ranked(byGroup.getOrDefault("MID", List.of()));
-        List<Player> fwds = ranked(byGroup.getOrDefault("FWD", List.of()));
+        // Score every player once
+        Map<Integer, Integer> scores = new HashMap<>();
+        for (Player p : available) {
+            scores.put(p.id(), scorePlayer(p));
+        }
 
+        // Greedily fill each formation slot with the highest-scoring eligible player
+        Set<Integer> picked = new HashSet<>();
         List<Player> startingXI = new ArrayList<>();
-        startingXI.addAll(pick(gks, 1));
-        startingXI.addAll(pick(defs, slots[0]));
-        startingXI.addAll(pick(mids, slots[1]));
-        startingXI.addAll(pick(fwds, slots[2]));
 
-        Set<Integer> starterIds = startingXI.stream()
-                .map(Player::id).collect(Collectors.toSet());
+        for (Slot slot : slots) {
+            Player best = available.stream()
+                    .filter(p -> !picked.contains(p.id()))
+                    .filter(p -> p.positionGroup().equals(slot.group))
+                    .max(Comparator.comparingInt((Player p) -> {
+                        int s = scores.get(p.id());
+                        // Bonus if the player's detailed position matches this slot
+                        if (slot.preferred.contains(p.position())) s += 10;
+                        return s;
+                    }).thenComparing(Player::name))
+                    .orElse(null);
 
-        List<Player> bench = team.squad().stream()
-                .filter(p -> p.position() != null)
-                .filter(p -> !starterIds.contains(p.id()))
-                .sorted(Comparator.comparingInt((Player p) -> groupOrder(p.positionGroup()))
-                        .thenComparingInt(Player::shirtNumber)
+            if (best != null) {
+                startingXI.add(best);
+                picked.add(best.id());
+            }
+        }
+
+        // Bench: next-best unpicked players, up to 9, balanced across groups
+        List<Player> bench = available.stream()
+                .filter(p -> !picked.contains(p.id()))
+                .sorted(Comparator.comparingInt((Player p) -> -scores.get(p.id()))
                         .thenComparing(Player::name))
                 .limit(9)
                 .toList();
@@ -94,45 +177,25 @@ public class LineupPredictor {
                 formation, startingXI, bench);
     }
 
-    /** Parse "4-3-3" -> [4,3,3] or "4-2-3-1" -> [4,5,1] (merge inner mids). */
-    private int[] parseFormation(String f) {
-        String[] parts = f.split("-");
-        if (parts.length == 3) {
-            return new int[]{
-                    Integer.parseInt(parts[0]),
-                    Integer.parseInt(parts[1]),
-                    Integer.parseInt(parts[2])};
-        }
-        if (parts.length == 4) {
-            return new int[]{
-                    Integer.parseInt(parts[0]),
-                    Integer.parseInt(parts[1]) + Integer.parseInt(parts[2]),
-                    Integer.parseInt(parts[3])};
-        }
-        if (parts.length == 5) {
-            return new int[]{
-                    Integer.parseInt(parts[0]),
-                    Integer.parseInt(parts[1]) + Integer.parseInt(parts[2]) + Integer.parseInt(parts[3]),
-                    Integer.parseInt(parts[4])};
-        }
-        return new int[]{4, 3, 3};
-    }
+    private int scorePlayer(Player p) {
+        int score = 50; // base
 
-    private List<Player> ranked(List<Player> players) {
-        return players.stream()
-                .sorted(Comparator.comparingInt((Player p) -> p.shirtNumber() == 0 ? 999 : p.shirtNumber())
-                        .thenComparing(Player::name))
-                .toList();
-    }
+        // --- Shirt number ---
+        int sn = p.shirtNumber();
+        if (sn >= 1 && sn <= 11)       score += 30;
+        else if (sn >= 12 && sn <= 23) score += 15;
+        else if (sn >= 24 && sn <= 30) score -= 5;
+        else                           score -= 30; // 0 or >30 = youth/unregistered
 
-    private List<Player> pick(List<Player> ranked, int n) {
-        return ranked.stream().limit(n).toList();
-    }
+        // --- Age ---
+        int age = p.age();
+        if (age == 0)                     score += 0;  // unknown DOB, neutral
+        else if (age >= 25 && age <= 30)  score += 25; // peak
+        else if (age >= 23 && age <= 32)  score += 15; // strong years
+        else if (age >= 21 && age <= 33)  score += 5;  // viable
+        else if (age < 21)               score -= 15;  // likely not first choice
+        else                             score -= 10;  // >34, winding down
 
-    private int groupOrder(String g) {
-        return switch (g) {
-            case "GK" -> 0; case "DEF" -> 1; case "MID" -> 2; case "FWD" -> 3;
-            default -> 4;
-        };
+        return score;
     }
 }

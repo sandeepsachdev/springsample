@@ -87,5 +87,8 @@ header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--magenta), 
 
 .empty { text-align: center; color: var(--muted); padding: 3rem 0; }
 
+.disclaimer { margin-top: 2rem; padding: 1rem; background: #1a0a38; border: 1px solid #2a1648; border-radius: .5rem; font-size: .85rem; color: var(--muted); line-height: 1.5; }
+.disclaimer strong { color: var(--cyan); }
+
 footer { margin-top: 3rem; text-align: center; color: var(--muted); font-size: .8rem; }
 footer a { color: var(--cyan); }

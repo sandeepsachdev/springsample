@@ -15,6 +15,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,11 +65,14 @@ public class FootballDataService {
         List<Player> squad = new ArrayList<>();
         for (JsonNode p : root.path("squad")) {
             String pos = p.path("position").asText(null);
+            String dob = p.path("dateOfBirth").asText(null);
+            LocalDate birthDate = (dob != null && !dob.isBlank()) ? LocalDate.parse(dob) : null;
             squad.add(new Player(
                     p.path("id").asInt(),
                     p.path("name").asText(),
                     pos,
-                    p.path("shirtNumber").asInt(0)
+                    p.path("shirtNumber").asInt(0),
+                    birthDate
             ));
         }
         return new Team(teamId, name, shortName, crest, formation, squad);
