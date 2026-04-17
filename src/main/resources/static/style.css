@@ -338,6 +338,170 @@ header h1 {
     font-weight: 500;
 }
 
+/* ===== SCORE PREDICTION ===== */
+.score-prediction-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.score-prediction-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--magenta), var(--gold), var(--cyan));
+}
+
+.score-prediction-label {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .15em;
+    color: var(--gold);
+    margin-bottom: 1.25rem;
+}
+
+.score-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.score-team-side {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 140px;
+}
+
+.score-team-side.home-side { justify-content: flex-end; }
+.score-team-side.away-side { justify-content: flex-start; }
+
+.score-crest {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
+}
+
+.score-numbers {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.score-digit {
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 1;
+    min-width: 2.5rem;
+    text-align: center;
+}
+
+.score-digit.home-digit {
+    background: linear-gradient(135deg, #fff, var(--magenta));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.score-digit.away-digit {
+    background: linear-gradient(135deg, #fff, var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.score-separator {
+    font-size: 2rem;
+    font-weight: 300;
+    color: var(--muted);
+}
+
+.score-meta {
+    margin-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .75rem;
+}
+
+.outcome-badge {
+    display: inline-block;
+    padding: .3rem 1.2rem;
+    border-radius: 2rem;
+    font-size: .75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+}
+
+.outcome-badge.HOME_WIN {
+    background: linear-gradient(135deg, rgba(233,0,82,.2), rgba(233,0,82,.1));
+    border: 1px solid rgba(233,0,82,.4);
+    color: var(--magenta);
+}
+
+.outcome-badge.AWAY_WIN {
+    background: linear-gradient(135deg, rgba(4,245,255,.15), rgba(4,245,255,.08));
+    border: 1px solid rgba(4,245,255,.35);
+    color: var(--cyan);
+}
+
+.outcome-badge.DRAW {
+    background: linear-gradient(135deg, rgba(245,166,35,.15), rgba(245,166,35,.08));
+    border: 1px solid rgba(245,166,35,.35);
+    color: var(--gold);
+}
+
+.confidence-wrap {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: .75rem;
+}
+
+.confidence-label { color: var(--muted); font-weight: 500; }
+
+.confidence-bar {
+    width: 100px;
+    height: 6px;
+    background: rgba(255,255,255,.08);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.confidence-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--magenta), var(--gold));
+    transition: width .6s ease;
+}
+
+.confidence-pct {
+    color: var(--gold);
+    font-weight: 700;
+    min-width: 2.5rem;
+}
+
+@media (max-width: 600px) {
+    .score-display { flex-direction: column; gap: .75rem; }
+    .score-team-side { min-width: auto; justify-content: center !important; }
+    .score-digit { font-size: 2.2rem; }
+    .score-prediction-card { padding: 1.25rem 1rem; }
+}
+
 /* ===== LINEUP CARDS ===== */
 .lineups-wrapper {
     display: grid;

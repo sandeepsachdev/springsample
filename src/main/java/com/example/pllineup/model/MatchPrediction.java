@@ -7,5 +7,6 @@ public record MatchPrediction(
         ZonedDateTime utcDate,
         int matchday,
         PredictedLineup home,
-        PredictedLineup away
+        PredictedLineup away,
+        ScorePrediction scorePrediction
 ) {}

@@ -31,6 +31,37 @@
            th:text="${#temporals.format(prediction.utcDate(), 'EEEE d MMMM yyyy, HH:mm')} + ' UTC  &bull;  Matchday ' + ${prediction.matchday()}">
         </p>
 
+        <div th:if="${prediction.scorePrediction() != null}" class="score-prediction-card">
+            <div class="score-prediction-label">Match Prediction</div>
+            <div class="score-display">
+                <div class="score-team-side home-side">
+                    <img th:src="${prediction.home().crest()}" alt="" class="score-crest"/>
+                    <span th:text="${prediction.home().shortName()}"></span>
+                </div>
+                <div class="score-numbers">
+                    <span class="score-digit home-digit" th:text="${prediction.scorePrediction().homeGoals()}"></span>
+                    <span class="score-separator">&ndash;</span>
+                    <span class="score-digit away-digit" th:text="${prediction.scorePrediction().awayGoals()}"></span>
+                </div>
+                <div class="score-team-side away-side">
+                    <span th:text="${prediction.away().shortName()}"></span>
+                    <img th:src="${prediction.away().crest()}" alt="" class="score-crest"/>
+                </div>
+            </div>
+            <div class="score-meta">
+                <span class="outcome-badge"
+                      th:classappend="${prediction.scorePrediction().outcome()}"
+                      th:text="${prediction.scorePrediction().outcomeLabel()}"></span>
+                <div class="confidence-wrap">
+                    <span class="confidence-label">Confidence</span>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" th:style="'width:' + ${prediction.scorePrediction().confidence()} + '%'"></div>
+                    </div>
+                    <span class="confidence-pct" th:text="${prediction.scorePrediction().confidence() + '%'}"></span>
+                </div>
+            </div>
+        </div>
+
         <div class="lineups-wrapper">
             <!-- Home -->
             <div class="lineup-card home-card">

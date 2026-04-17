@@ -121,10 +121,12 @@ public class LineupPredictor {
     }
 
     public MatchPrediction predict(Match match, Team homeTeam, Team awayTeam) {
+        PredictedLineup home = predictForTeam(homeTeam);
+        PredictedLineup away = predictForTeam(awayTeam);
+        ScorePrediction score = predictScore(home, away);
         return new MatchPrediction(
                 match.id(), match.utcDate(), match.matchday(),
-                predictForTeam(homeTeam),
-                predictForTeam(awayTeam));
+                home, away, score);
     }
 
     private PredictedLineup predictForTeam(Team team) {
@@ -197,5 +199,45 @@ public class LineupPredictor {
         else                             score -= 10;  // >34, winding down
 
         return score;
+    }
+
+    private ScorePrediction predictScore(PredictedLineup home, PredictedLineup away) {
+        double homeAttack = subgroupStrength(home.startingXI(), Set.of("FWD", "MID"));
+        double homeDefense = subgroupStrength(home.startingXI(), Set.of("DEF", "GK"));
+        double awayAttack = subgroupStrength(away.startingXI(), Set.of("FWD", "MID"));
+        double awayDefense = subgroupStrength(away.startingXI(), Set.of("DEF", "GK"));
+
+        // PL base rates (~1.45 home, ~1.15 away) adjusted by attack vs opponent defense
+        double homeXG = 1.45 + (homeAttack - awayDefense) * 0.025;
+        double awayXG = 1.15 + (awayAttack - homeDefense) * 0.025;
+
+        homeXG = Math.max(0.3, Math.min(4.0, homeXG));
+        awayXG = Math.max(0.2, Math.min(3.5, awayXG));
+
+        int homeGoals = (int) Math.round(homeXG);
+        int awayGoals = (int) Math.round(awayXG);
+
+        String outcome;
+        if (homeGoals > awayGoals) outcome = "HOME_WIN";
+        else if (awayGoals > homeGoals) outcome = "AWAY_WIN";
+        else outcome = "DRAW";
+
+        double xgGap = Math.abs(homeXG - awayXG);
+        int confidence;
+        if (xgGap < 0.15)      confidence = 30;
+        else if (xgGap < 0.4)  confidence = 42;
+        else if (xgGap < 0.7)  confidence = 55;
+        else if (xgGap < 1.0)  confidence = 65;
+        else                    confidence = 75;
+
+        return new ScorePrediction(homeGoals, awayGoals, outcome, confidence);
+    }
+
+    private double subgroupStrength(List<Player> xi, Set<String> groups) {
+        return xi.stream()
+                .filter(p -> groups.contains(p.positionGroup()))
+                .mapToInt(this::scorePlayer)
+                .average()
+                .orElse(50);
     }
 }
